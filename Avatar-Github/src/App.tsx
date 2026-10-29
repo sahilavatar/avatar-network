@@ -273,8 +273,10 @@ export default function App() {
     if (toggled.kind === 'upload') updateUploadSource(toggled).catch((err) => console.warn('Could not save change:', err));
   };
 
-  const handleFileUpload = async (fileList: FileList) => {
-    const subject = currentSubject;
+  /** Adds files to an Avatar's notebook: the current one, or a just-created one whose persona isn't in state yet */
+  const handleFileUpload = async (fileList: FileList | File[], target?: { subject: SubjectId; name: string }) => {
+    const subject = target?.subject ?? currentSubject;
+    const notebookOwner = target?.name ?? allPersonas[subject]?.name ?? 'your';
     const newSources: SourceDocument[] = [];
     const newPassages: Passage[] = [];
 
@@ -308,7 +310,7 @@ export default function App() {
         showNotice(
           exam.questions.length > 0
             ? `Added ${file.name} with ${exam.questions.length} practice questions`
-            : `Added ${file.name} to ${allPersonas[subject]?.name ?? 'your'}'s notebook`
+            : `Added ${file.name} to ${notebookOwner}'s notebook`
         );
       } catch (err) {
         console.error('File parsing error:', err);
@@ -677,7 +679,7 @@ export default function App() {
         title: docTitle,
         shortTitle: docTitle.slice(0, 24),
         kind: 'upload',
-        author: payload.name,
+        author: 'Your upload',
         license: 'Private On-Device',
         passagesCount: chunks.length,
         tokens: chunks.reduce((sum, p) => sum + p.tokens, 0),
@@ -692,6 +694,8 @@ export default function App() {
     setCurrentSubject(subjectId);
     setActiveConversationId(null);
     showNotice(`${payload.name} is ready`);
+    // Files picked in the form go through the normal upload path: PDF text, practice questions, saving
+    if (payload.files?.length) handleFileUpload(payload.files, { subject: subjectId, name: payload.name });
     try {
       confetti({ particleCount: 50, spread: 60, origin: { y: 0.7 } });
     } catch {

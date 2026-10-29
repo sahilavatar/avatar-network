@@ -39,6 +39,8 @@ export interface CreateAvatarPayload {
   toneDescription: string;
   supportingDocTitle?: string;
   supportingDocContent?: string;
+  // Notes uploaded while creating the Avatar (PDF, TXT, MD); added to its notebook like any upload
+  files?: File[];
 }
 
 export interface ToolExecutionResult {

@@ -87,7 +87,7 @@ export const CreateAvatarModal: React.FC<CreateAvatarModalProps> = ({
   // Supporting docs
   const [supportingDocTitle, setSupportingDocTitle] = useState('');
   const [supportingDocContent, setSupportingDocContent] = useState('');
-  const [uploadedFileName, setUploadedFileName] = useState('');
+  const [docFiles, setDocFiles] = useState<File[]>([]);
 
   const imageInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -112,22 +112,11 @@ export const CreateAvatarModal: React.FC<CreateAvatarModalProps> = ({
     }
   };
 
-  // Handle document file upload (.txt, .md, .json, .csv)
+  // Notes files are read when the Avatar is created, through the same upload path as the + button
   const handleDocFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setUploadedFileName(file.name);
-      if (!supportingDocTitle) {
-        setSupportingDocTitle(file.name.replace(/\.[^/.]+$/, ''));
-      }
-      const reader = new FileReader();
-      reader.onload = () => {
-        if (typeof reader.result === 'string') {
-          setSupportingDocContent(reader.result);
-        }
-      };
-      reader.readAsText(file);
-    }
+    const picked = Array.from(e.target.files ?? []);
+    setDocFiles((prev) => [...prev, ...picked.filter((f) => !prev.some((p) => p.name === f.name && p.size === f.size))]);
+    e.target.value = '';
   };
 
   const handleToggleTask = (task: string) => {
@@ -166,10 +155,15 @@ export const CreateAvatarModal: React.FC<CreateAvatarModalProps> = ({
       accentColor: '#6366f1',
       toneDescription: toneDescription.trim() || 'Supportive and intellectually rigorous',
       supportingDocTitle: supportingDocTitle.trim() || undefined,
-      supportingDocContent: supportingDocContent.trim() || undefined
+      supportingDocContent: supportingDocContent.trim() || undefined,
+      files: docFiles.length ? docFiles : undefined
     };
 
     onCreateAvatar(payload);
+    // The files and pasted text now belong to that Avatar; don't carry them into the next one
+    setDocFiles([]);
+    setSupportingDocTitle('');
+    setSupportingDocContent('');
     onClose();
   };
 
@@ -528,58 +522,72 @@ export const CreateAvatarModal: React.FC<CreateAvatarModalProps> = ({
                 <FileText className="w-4 h-4 text-indigo-500" />
                 4. Supporting Documents & Knowledge Base (Optional)
               </h3>
-              {supportingDocContent && (
+              {(docFiles.length > 0 || supportingDocContent) && (
                 <span className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
                   <Check className="w-3 h-3" />
-                  {supportingDocContent.length.toLocaleString()} chars loaded
+                  {[docFiles.length ? `${docFiles.length} file${docFiles.length === 1 ? '' : 's'}` : '', supportingDocContent ? 'pasted text' : '']
+                    .filter(Boolean)
+                    .join(' + ')}
                 </span>
               )}
             </div>
 
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              Provide textbook notes, a course syllabus, or reference material so your avatar can ground its answers with exact citations.
+              Add notes, handouts, a syllabus or study guides so your Avatar can answer from them and show its sources. PDFs with
+              practice questions get their questions picked up too.
             </p>
 
             <div className="space-y-3 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800">
-              {/* Document Title & File Upload Button */}
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              {/* Files: PDF, TXT, MD; several at once */}
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleDocFileUpload}
+                accept=".pdf,.txt,.md,.markdown"
+                multiple
+                className="hidden"
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-white dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 border border-dashed border-slate-300 dark:border-slate-600 text-xs font-semibold text-slate-800 dark:text-slate-200 transition-colors cursor-pointer"
+              >
+                <Upload className="w-3.5 h-3.5 text-indigo-500" />
+                <span>{docFiles.length ? 'Add more files' : 'Upload files (PDF, TXT, MD)'}</span>
+              </button>
+
+              {docFiles.length > 0 && (
+                <ul className="space-y-1" aria-label="Files to add">
+                  {docFiles.map((f) => (
+                    <li key={`${f.name}-${f.size}`} className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300">
+                      <FileText className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                      <span className="flex-1 min-w-0 truncate">{f.name}</span>
+                      <span className="text-slate-400 shrink-0">{f.size < 1e6 ? `${Math.max(1, Math.round(f.size / 1e3))} KB` : `${(f.size / 1e6).toFixed(1)} MB`}</span>
+                      <button
+                        type="button"
+                        onClick={() => setDocFiles((prev) => prev.filter((p) => p !== f))}
+                        className="p-0.5 rounded text-slate-400 hover:text-rose-600 cursor-pointer"
+                        aria-label={`Remove ${f.name}`}
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              {/* Direct Paste Area */}
+              <div className="space-y-2">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  Or paste text
+                </label>
                 <input
                   type="text"
                   value={supportingDocTitle}
                   onChange={(e) => setSupportingDocTitle(e.target.value)}
-                  placeholder="Document Title (e.g. AP Bio Lecture Notes)"
-                  className="flex-1 px-3 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  placeholder="Title for the pasted text (e.g. Unit 3 lecture notes)"
+                  className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
-
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleDocFileUpload}
-                  accept=".txt,.md,.markdown,.json,.csv"
-                  className="hidden"
-                />
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-white dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 border border-slate-300 dark:border-slate-600 text-xs font-semibold text-slate-800 dark:text-slate-200 transition-colors shadow-xs cursor-pointer shrink-0"
-                >
-                  <Upload className="w-3.5 h-3.5 text-indigo-500" />
-                  <span>{uploadedFileName ? 'Replace File' : 'Upload File (.txt, .md)'}</span>
-                </button>
-              </div>
-
-              {uploadedFileName && (
-                <div className="text-xs text-indigo-600 dark:text-indigo-400 font-medium flex items-center gap-1.5">
-                  <FileText className="w-3.5 h-3.5" />
-                  <span>Loaded from: {uploadedFileName}</span>
-                </div>
-              )}
-
-              {/* Direct Paste Area */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  Or Paste Document Text Directly
-                </label>
                 <textarea
                   rows={4}
                   value={supportingDocContent}
