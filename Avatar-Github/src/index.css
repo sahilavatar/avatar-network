@@ -1,0 +1,99 @@
+@import "tailwindcss";
+
+/* dark: follows the in-app toggle (.dark on <html>) instead of the OS setting */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * Per-tutor accent scale. `accent-*` utilities read --accent-{shade}, which
+ * src/services/accentTheme.ts rewrites on <html> when the active tutor changes.
+ * Defaults below are Lumen indigo so first paint matches the brand.
+ */
+@theme inline {
+  --color-accent-50: var(--accent-50);
+  --color-accent-100: var(--accent-100);
+  --color-accent-200: var(--accent-200);
+  --color-accent-300: var(--accent-300);
+  --color-accent-400: var(--accent-400);
+  --color-accent-500: var(--accent-500);
+  --color-accent-600: var(--accent-600);
+  --color-accent-700: var(--accent-700);
+  --color-accent-800: var(--accent-800);
+  --color-accent-900: var(--accent-900);
+  --color-accent-950: var(--accent-950);
+}
+
+/* Registered as <color> so switching tutors cross-fades instead of snapping */
+@property --accent-50 { syntax: '<color>'; inherits: true; initial-value: #eef2ff; }
+@property --accent-100 { syntax: '<color>'; inherits: true; initial-value: #e0e7ff; }
+@property --accent-200 { syntax: '<color>'; inherits: true; initial-value: #c7d2fe; }
+@property --accent-300 { syntax: '<color>'; inherits: true; initial-value: #a5b4fc; }
+@property --accent-400 { syntax: '<color>'; inherits: true; initial-value: #818cf8; }
+@property --accent-500 { syntax: '<color>'; inherits: true; initial-value: #6366f1; }
+@property --accent-600 { syntax: '<color>'; inherits: true; initial-value: #4f46e5; }
+@property --accent-700 { syntax: '<color>'; inherits: true; initial-value: #4338ca; }
+@property --accent-800 { syntax: '<color>'; inherits: true; initial-value: #3730a3; }
+@property --accent-900 { syntax: '<color>'; inherits: true; initial-value: #312e81; }
+@property --accent-950 { syntax: '<color>'; inherits: true; initial-value: #1e1b4b; }
+
+:root {
+  transition-property: --accent-50, --accent-100, --accent-200, --accent-300, --accent-400, --accent-500,
+    --accent-600, --accent-700, --accent-800, --accent-900, --accent-950;
+  transition-duration: 450ms;
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    transition-duration: 0ms;
+  }
+}
+
+@layer base {
+  body {
+    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    letter-spacing: -0.02em;
+  }
+
+  code, pre, .font-mono {
+    font-family: 'JetBrains Mono', monospace;
+  }
+}
+
+.noscroll {
+  scrollbar-width: none;
+}
+.noscroll::-webkit-scrollbar {
+  display: none;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(16px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes slideDown {
+  from { transform: translate(-50%, -16px); opacity: 0; }
+  to { transform: translate(-50%, 0); opacity: 1; }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.25s ease-out forwards;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-slide-down {
+  animation: slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}

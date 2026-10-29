@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>About · Avatar Network</title>
+    <meta name="description" content="Avatar Network is a private AI study assistant that answers from your own notes, running entirely in your browser." />
+    <link rel="icon" href="favicon.ico" sizes="48x48" />
+    <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #ffffff;
+        --surface: #f8fafc;
+        --text: #0f172a;
+        --muted: #475569;
+        --border: #e2e8f0;
+        --accent: #4f46e5;
+        --accent-text: #ffffff;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #020617;
+          --surface: #0f172a;
+          --text: #f1f5f9;
+          --muted: #94a3b8;
+          --border: #1e293b;
+          --accent: #818cf8;
+          --accent-text: #0f172a;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font: 16px/1.6 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      }
+      a {
+        color: inherit;
+      }
+      .wrap {
+        max-width: 960px;
+        margin: 0 auto;
+        padding: 0 16px;
+      }
+      header.bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 20px 0;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 700;
+        text-decoration: none;
+      }
+      .brand img {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+      }
+      .btn {
+        display: inline-block;
+        padding: 12px 20px;
+        border-radius: 999px;
+        background: var(--accent);
+        color: var(--accent-text);
+        font-weight: 600;
+        text-decoration: none;
+      }
+      .btn.small {
+        padding: 8px 16px;
+        font-size: 14px;
+      }
+      .hero {
+        text-align: center;
+        padding: 56px 0 40px;
+      }
+      .hero img {
+        width: 112px;
+        height: 112px;
+      }
+      .hero h1 {
+        font-size: clamp(32px, 6vw, 52px);
+        line-height: 1.1;
+        margin: 20px 0 12px;
+        letter-spacing: -0.02em;
+      }
+      .hero p {
+        font-size: 18px;
+        color: var(--muted);
+        max-width: 560px;
+        margin: 0 auto 28px;
+      }
+      h2 {
+        font-size: 24px;
+        margin: 0 0 16px;
+      }
+      section {
+        padding: 32px 0;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+        gap: 12px;
+      }
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 20px;
+      }
+      .card h3 {
+        margin: 0 0 6px;
+        font-size: 16px;
+      }
+      .card p,
+      li,
+      .muted {
+        color: var(--muted);
+        margin: 0;
+      }
+      ol.steps {
+        padding-left: 20px;
+        display: grid;
+        gap: 8px;
+      }
+      footer {
+        border-top: 1px solid var(--border);
+        padding: 24px 0 40px;
+        color: var(--muted);
+        font-size: 14px;
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header class="bar">
+        <a class="brand" href="./"><img src="brand/icon-192.png" alt="" width="32" height="32" />Avatar Network</a>
+        <a class="btn small" href="./">Open the app</a>
+      </header>
+
+      <div class="hero">
+        <img src="brand/logo-mark.png" alt="" width="112" height="112" />
+        <h1>Study with AI that runs on your device</h1>
+        <p>Upload your notes and ask questions. Avatar Network answers from your own material first and shows the passage each answer came from, and tells you when an answer comes from general knowledge instead. Free, no account, and your notes never leave your device.</p>
+        <a class="btn" href="./">Start studying</a>
+      </div>
+
+      <section aria-labelledby="why">
+        <h2 id="why">What it does</h2>
+        <div class="grid">
+          <div class="card">
+            <h3>Answers from your notes</h3>
+            <p>Questions are answered using the most relevant passages from what you uploaded, with the source shown. When your notes don’t cover a question, the answer is marked as general knowledge.</p>
+          </div>
+          <div class="card">
+            <h3>Private by design</h3>
+            <p>The AI runs inside your browser. Your files, questions and progress are stored only on this device.</p>
+          </div>
+          <div class="card">
+            <h3>Exact calculators</h3>
+            <p>Equations, molar mass, gas laws, Punnett squares and more are solved exactly with worked steps, not guessed by AI.</p>
+          </div>
+          <div class="card">
+            <h3>Avatars, goals and skills</h3>
+            <p>Give each subject its own Avatar and notebook, set goals with deadlines, and add skills like flashcards or exam prep.</p>
+          </div>
+        </div>
+      </section>
+
+      <section aria-labelledby="how">
+        <h2 id="how">How it works</h2>
+        <ol class="steps">
+          <li>Download the AI model once (about 1.1&ndash;1.3 GB). It's cached in your browser, so later visits load it from your device.</li>
+          <li>Add your class notes, handouts or PDFs to an Avatar's notebook.</li>
+          <li>Ask anything. Check each answer against the cited passage, and practise with quiz questions.</li>
+        </ol>
+      </section>
+
+      <section aria-labelledby="models">
+        <h2 id="models">Models</h2>
+        <p class="muted">
+          Avatar Network uses Google's open Gemma models: Gemma 3 1B to write answers and EmbeddingGemma to find the right passages,
+          run with ONNX Runtime in your browser. It works best with WebGPU: Chrome or Edge on a laptop, or Safari 26+ on a Mac; without it, answers are
+          slower. AI answers can contain mistakes, which is why answers drawn from your notes link to their source and
+          general-knowledge answers are labelled as such.
+        </p>
+        <p class="muted">
+          Gemma is provided under and subject to the <a href="https://ai.google.dev/gemma/terms">Gemma Terms of Use</a>,
+          including the <a href="https://ai.google.dev/gemma/prohibited_use_policy">Gemma Prohibited Use Policy</a>.
+          The sample Avatars' notes and practice questions were written for Avatar Network as demo material.
+        </p>
+      </section>
+
+      <footer>
+        <span>© Avatar Network</span>
+        <a href="privacy.html">Privacy</a>
+        <a href="./">Open the app</a>
+      </footer>
+    </div>
+  </body>
+</html>

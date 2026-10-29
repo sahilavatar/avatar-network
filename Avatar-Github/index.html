@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Avatar Network · Private AI study assistant</title>
+    <meta name="description" content="Upload your notes and ask questions. Avatar Network answers from your own material with cited sources, using AI that runs entirely in your browser — free, no account, nothing leaves your device." />
+    <meta name="theme-color" content="#000000" />
+    <!-- Hosts that can't send COOP/COEP headers (GitHub Pages): a service worker adds them so the AI's
+         shared-memory WASM works. It does nothing where the headers are already set (vercel.json, _headers).
+         COEP is require-corp rather than credentialless because Safari only supports require-corp; every
+         cross-origin file is fetched with CORS (models, ONNX Runtime, PDF reader, and fonts via crossorigin). -->
+    <script>window.coi = { coepCredentialless: () => false, quiet: true };</script>
+    <script src="coi-serviceworker.js"></script>
+    <link rel="icon" href="favicon.ico" sizes="48x48" />
+    <link rel="icon" type="image/png" sizes="32x32" href="brand/favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="brand/favicon-16.png" />
+    <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta property="og:title" content="Avatar Network · Private AI study assistant" />
+    <meta property="og:description" content="Ask questions about your own notes and get answers that show their sources. The AI runs entirely in your browser: free, private, no account." />
+    <meta property="og:type" content="website" />
+    <!-- Link previews need absolute URLs; update these if the site moves to a custom domain -->
+    <meta property="og:url" content="https://sahilavatar.github.io/avatar-network/" />
+    <meta property="og:image" content="https://sahilavatar.github.io/avatar-network/brand/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Avatar Network: private AI study assistant that runs in your browser" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..700&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" crossorigin="anonymous" />
+    <script>
+      // Apply the saved (or OS) theme before first paint to avoid a light flash
+      (function () {
+        try {
+          var pref = localStorage.getItem('avatar_theme');
+          var legacy = localStorage.getItem('lumen_dark');
+          if (!pref && legacy !== null) pref = legacy === 'true' ? 'dark' : 'light';
+          var dark = pref === 'dark' || (pref !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          if (dark) document.documentElement.classList.add('dark');
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body>
+    <noscript>Avatar Network needs JavaScript: its AI runs inside your browser.</noscript>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

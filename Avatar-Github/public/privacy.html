@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Privacy · Avatar Network</title>
+    <meta name="description" content="How Avatar Network handles your notes and questions: everything stays in your browser." />
+    <link rel="icon" href="favicon.ico" sizes="48x48" />
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #ffffff;
+        --text: #0f172a;
+        --muted: #475569;
+        --border: #e2e8f0;
+        --link: #4f46e5;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #020617;
+          --text: #f1f5f9;
+          --muted: #94a3b8;
+          --border: #1e293b;
+          --link: #a5b4fc;
+        }
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font: 16px/1.6 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      }
+      main {
+        max-width: 680px;
+        margin: 0 auto;
+        padding: 40px 16px 64px;
+      }
+      header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 24px;
+      }
+      header img {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+      }
+      h1 {
+        font-size: 28px;
+        margin: 0;
+      }
+      h2 {
+        font-size: 18px;
+        margin: 32px 0 8px;
+      }
+      p,
+      li {
+        color: var(--muted);
+      }
+      strong {
+        color: var(--text);
+      }
+      a {
+        color: var(--link);
+      }
+      ul {
+        padding-left: 20px;
+      }
+      .summary {
+        padding: 16px;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <img src="brand/icon-192.png" alt="" width="40" height="40" />
+        <h1>Privacy</h1>
+      </header>
+
+      <p class="summary">
+        <strong>In short:</strong> Avatar Network runs its AI inside your browser. Your notes, questions, chats and progress
+        are stored on your device and are never sent to us or anyone else. There are no accounts, no analytics and no
+        tracking.
+      </p>
+
+      <h2>What stays on your device</h2>
+      <ul>
+        <li>Files you upload and the text extracted from them</li>
+        <li>Your questions and the AI's answers</li>
+        <li>Search indexes built from your notes</li>
+        <li>Your practice results, custom avatars and settings</li>
+      </ul>
+      <p>
+        These are kept in your browser's storage (IndexedDB and local storage) for this site. They are not uploaded
+        anywhere, and they're not synced between devices or browsers.
+      </p>
+
+      <h2>What the app downloads</h2>
+      <p>To run, the app fetches files from these services. They receive standard request information such as your IP
+        address and browser type, but never your notes or questions.</p>
+      <ul>
+        <li><strong>Hugging Face</strong> (huggingface.co and its CDN): the AI models, Gemma 3 1B and EmbeddingGemma, about 1.1&ndash;1.3&nbsp;GB, downloaded once and then cached. Gemma is provided under the <a href="https://ai.google.dev/gemma/terms">Gemma Terms of Use</a>.</li>
+        <li><strong>jsDelivr</strong> (cdn.jsdelivr.net): the ONNX Runtime engine that runs the models</li>
+        <li><strong>cdnjs</strong> (cdnjs.cloudflare.com): the PDF reader used to extract text from uploaded PDFs</li>
+        <li><strong>Google Fonts</strong>: the fonts used by the interface</li>
+      </ul>
+      <p>GitHub, which hosts this website on GitHub Pages, may keep standard server logs of page requests, such as IP addresses.</p>
+
+      <h2>Deleting your data</h2>
+      <p>
+        Use <strong>Reset</strong> in the Notes tab to delete your uploads, progress and custom avatars, or clear this
+        site's data in your browser settings to remove everything, including the downloaded models.
+      </p>
+
+      <p><a href="./">← Back to Avatar Network</a></p>
+    </main>
+  </body>
+</html>
