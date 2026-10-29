@@ -91,10 +91,11 @@ describe('stripPdfBoilerplate', () => {
     for (const n of [3, 4, 5, 6]) expect(cleaned).toContain(`[Page ${n}]\nPage ${n} content: this page explains ${topics[n].split(" ").slice(0, 3).join(" ")}`);
   });
   test('strips headers even when every page is short', () => {
-    const short = [3, 4, 5, 6].map((n) => `[Page ${n}]\n${header} Short fact number ${n}.`).join('\n\n');
+    const facts = ['The Stamp Act taxed paper.', 'Boston hosted a tea party.', 'Paine wrote Common Sense.', 'Yorktown ended major fighting.'];
+    const short = facts.map((f, i) => `[Page ${i + 3}]\n${header} ${f}`).join('\n\n');
     const out = stripPdfBoilerplate(short);
     expect(out).not.toContain('Return to Table of Contents');
-    expect(out).toContain('Short fact number 4.');
+    for (const f of facts) expect(out).toContain(f);
   });
   test('leaves text without boilerplate alone, and never empties a document', () => {
     const plain = '[Page 1]\nShort note.';
