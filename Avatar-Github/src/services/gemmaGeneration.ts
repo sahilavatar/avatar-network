@@ -113,7 +113,8 @@ function systemPrompt(persona: Persona, style: TeachingStyle, skills: string[] =
   lines.push(
     'Keep replies under 120 words. Write plain sentences: no headings, no bold, no lists. Use $...$ for formulas.',
     'Answer the question in your first sentence. No greetings or filler such as "Okay", "Great question" or "Let\'s dive in".',
-    'When course notes are given, they are the source of truth: state facts exactly as the notes do (numbers, names, colours, dates, units), cite them like [1], and do not add or change details. If the notes don\'t say, say so. If no notes are given, answer from general knowledge.',
+    'When course notes are given, they are the source of truth: state facts exactly as the notes do (numbers, names, colours, dates, units), cite them like [1], and do not add or change details. If no notes are given, answer from general knowledge.',
+    'Talk to the student directly as "you"; never refer to "the student".',
     'Never describe or quote the student\'s notes unless they are shown to you.',
     'End with one short question that checks understanding.'
   );
@@ -247,13 +248,13 @@ export function buildTutorMessages(params: GenerationParams, relevant: VectorSea
     );
   }
 
-  parts.push(`Question from the student: ${query}`);
+  parts.push(`Question: ${query}`);
   parts.push(
     toolExecution
       ? 'Now, in 2-4 sentences, explain the idea behind this method to the student. Do not do any calculations yourself.'
       : notes.length
-        ? "Now answer the student's question using the notes' exact facts, citing the notes like [1]."
-        : 'Now reply to the student as their tutor.'
+        ? "Now answer the question using the notes' exact facts, citing the notes like [1]."
+        : 'Now answer the question as their tutor.'
   );
 
   return [
