@@ -23,6 +23,8 @@ export interface GenerationParams {
   skills?: string[];
   resolvedTopic?: string;
   isDeepDive?: boolean;
+  // Asks to re-explain the previous answer ("I don't understand")
+  isClarification?: boolean;
   onToken?: (textSoFar: string) => void;
 }
 
@@ -153,6 +155,40 @@ function formatQuizForPrompt(q: QuizQuestion): string {
   ].filter(Boolean).join('\n');
 }
 
+/** "Do you have access to my practice exam?", "what files do you have?": answered from the notebook itself */
+export function asksAboutNotebookAccess(query: string): boolean {
+  const things = '(?:notes?|notebook|files?|uploads?|documents?|docs|pdfs?|handouts?|materials?|sources?|exams?|practice\\s+(?:exam|test)s?|slides|syllabus)';
+  return (
+    new RegExp(`\\b(?:do|can|did)\\s+you\\s+(?:have|see|access|read|get|know\\s+about)\\b.*\\b${things}\\b`, 'i').test(query) ||
+    new RegExp(`\\bwhat\\s+${things}\\s+(?:do\\s+you\\s+have|are\\s+(?:in|there)|have\\s+i\\s+(?:uploaded|added))\\b`, 'i').test(query) ||
+    /\b(?:did|has)\s+(?:my|the)\s+(?:upload|file|pdf|notes?)\s+(?:work|upload|go\s+through)\b/i.test(query)
+  );
+}
+
+/** Plain answer listing an Avatar's notebook, for asksAboutNotebookAccess */
+export function describeNotebook(avatarName: string, sources: SourceDocument[]): string {
+  const on = sources.filter(s => s.enabled);
+  const off = sources.length - on.length;
+  if (on.length === 0) {
+    return off
+      ? `${avatarName}'s notebook has ${off} source${off === 1 ? '' : 's'}, but they're all switched off. Turn them on in the Notebook and I'll use them.`
+      : `${avatarName}'s notebook is empty. Upload a PDF, TXT or Markdown file with the + button and I'll answer from it.`;
+  }
+  const lines = on.slice(0, 8).map(s => {
+    const qs = s.parsedQuestions?.length ?? 0;
+    const parts = [s.passagesCount ? `${s.passagesCount} passage${s.passagesCount === 1 ? '' : 's'}` : '', qs ? `${qs} practice question${qs === 1 ? '' : 's'}` : '']
+      .filter(Boolean)
+      .join(', ');
+    return `• ${s.title}${parts ? ` (${parts})` : ''}`;
+  });
+  if (on.length > 8) lines.push(`• …and ${on.length - 8} more`);
+  return [
+    `Yes. ${avatarName}'s notebook has ${on.length} source${on.length === 1 ? '' : 's'} switched on${off ? ` (${off} switched off)` : ''}:`,
+    lines.join('\n'),
+    'Ask me about anything in them, or say "quiz me" to practise.'
+  ].join('\n\n');
+}
+
 /** Whether the question is about the student's own uploads ("summarize my notes", "what's in my files") */
 export function asksAboutOwnNotes(query: string): boolean {
   return /\b(my|these|the|uploaded)\s+(notes?|notebook|files?|uploads?|documents?|docs|handouts?|pdfs?|materials?|slides)\b/i.test(query);
@@ -188,7 +224,8 @@ export function buildTutorMessages(params: GenerationParams, relevant: VectorSea
     );
   }
 
-  if (!notes.length && !toolExecution && params.notebook) {
+  // Re-explaining or going deeper builds on the previous answer, so "the notes don't cover this" would be wrong there
+  if (!notes.length && !toolExecution && params.notebook && !params.isClarification && !isDeepDive) {
     const { passages, titles } = params.notebook;
     parts.push(
       passages === 0
@@ -197,10 +234,15 @@ export function buildTutorMessages(params: GenerationParams, relevant: VectorSea
     );
   }
 
-  const exam = detectExamQuestionTarget(query, params.sources || []);
+  const exam = detectExamQuestionTarget(query, params.sources || [], persona.subject);
   if (exam) parts.push(formatQuizForPrompt(exam.question));
   if (goals.length) parts.push(`The student's goals with you:\n${goals.map(g => `- ${g}`).join('\n')}`);
   if (isDeepDive && resolvedTopic) parts.push(`The student wants a deeper explanation of: ${resolvedTopic}`);
+  if (params.isClarification) {
+    parts.push(
+      "The student didn't understand your previous answer. Explain the same idea again more simply: short steps and one everyday example. Keep the facts the same."
+    );
+  }
 
   parts.push(
     toolExecution
@@ -364,38 +406,29 @@ export async function generateGroundedQuiz(topic: string, passage: Passage, subj
 /**
  * Detect if user is asking about a specific question from an uploaded exam
  */
-function detectExamQuestionTarget(
+/**
+ * The exam question a student names by number ("question 12", "#3"), looked up only in this
+ * Avatar's enabled sources. Merely mentioning an exam doesn't pick a question: earlier this
+ * attached the first question of any notebook's exam, e.g. a chemistry problem in a history chat.
+ */
+export function detectExamQuestionTarget(
   query: string,
-  sources: SourceDocument[]
+  sources: SourceDocument[],
+  subject: SubjectId
 ): { question: QuizQuestion; source: SourceDocument } | null {
-  const qLower = query.toLowerCase();
-  const qNumMatch = qLower.match(/(?:question|q|problem|number|#)\s*(\d+)/i);
-  const targetNum = qNumMatch ? parseInt(qNumMatch[1], 10) : null;
+  const qNumMatch = query.match(/\b(?:question|q|problem|number|no\.?)\s*#?\s*(\d+)\b|#\s*(\d+)\b/i);
+  if (!qNumMatch) return null;
+  const targetNum = parseInt(qNumMatch[1] ?? qNumMatch[2], 10);
 
-  const examSources = sources.filter(s => s.enabled && s.parsedQuestions && s.parsedQuestions.length > 0);
-
-  if (!examSources.length) return null;
-
+  const examSources = sources.filter(s => s.subject === subject && s.enabled && s.parsedQuestions && s.parsedQuestions.length > 0);
   for (const exam of examSources) {
-    const questions = exam.parsedQuestions || [];
-    if (targetNum !== null) {
-      const match = questions.find(q =>
-        q.originalQuestionNumber === targetNum ||
-        q.id.endsWith(`-${targetNum}`) ||
-        q.id.endsWith(`q${targetNum}`)
-      );
-      if (match) {
-        return { question: match, source: exam };
-      }
-    }
-
-    if (qLower.includes('exam') || qLower.includes('practice test') || qLower.includes('vault problem') || qLower.includes('practice problem')) {
-      if (exam.kind === 'upload' || exam.id === 'chem-ap-vault') {
-        return { question: questions[0], source: exam };
-      }
-    }
+    const match = (exam.parsedQuestions || []).find(q =>
+      q.originalQuestionNumber === targetNum ||
+      q.id.endsWith(`-${targetNum}`) ||
+      q.id.endsWith(`q${targetNum}`)
+    );
+    if (match) return { question: match, source: exam };
   }
-
   return null;
 }
 

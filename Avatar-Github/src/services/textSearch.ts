@@ -349,6 +349,23 @@ export function isFollowUpOrDeepDiveQuery(query: string): {
  * or inquires about a specific detail mentioned in a prior turn,
  * this anchors vector retrieval and topic continuity to the ongoing educational dialogue.
  */
+const CLARIFICATION_PATTERNS = [
+  /\b(?:do\s*n[o']?t|dont|do not|still don'?t)\s+(?:understand|get\s+it|get\s+that|follow)\b/i,
+  /\bconfus(?:ed|ing)\b/i,
+  /\bwhat\s+do(?:es)?\s+(?:you|that|it|this)\s+mean\b/i,
+  /\b(?:explain|say|put)\s+(?:it|that|this)\s+(?:again|differently|another\s+way|more\s+simply|simpler)\b/i,
+  /\b(?:simpler|more\s+simply|in\s+simple\s+terms|plain\s+english|eli5|dumb\s+it\s+down)\b/i,
+  /\b(?:can|could)\s+you\s+clarify\b/i,
+  /\bi'?m\s+(?:lost|confused)\b/i,
+  /\bmakes?\s+no\s+sense\b/i,
+  /^\s*(?:huh|what|wdym|\?+)\s*\??\s*$/i
+];
+
+/** "I don't understand", "explain that more simply"…: about the previous answer, not a new topic */
+export function isClarificationRequest(query: string): boolean {
+  return CLARIFICATION_PATTERNS.some((re) => re.test(query));
+}
+
 export function resolveConversationalContext(
   userText: string,
   history: Array<{ role: string; text: string; citations?: any[]; quizData?: any }>,
@@ -359,6 +376,8 @@ export function resolveConversationalContext(
   anchorTopic: string;
   isFollowUp: boolean;
   isDeepDive: boolean;
+  // Asks to re-explain the previous answer; searched with the previous question instead of its own words
+  isClarification: boolean;
   cleanUserQuery: string;
 } {
   const followUpCheck = isFollowUpOrDeepDiveQuery(userText);
@@ -459,11 +478,19 @@ export function resolveConversationalContext(
     }
   }
 
+  // "I don't understand" has no topic words of its own: search with the question being clarified
+  const isClarification = isClarificationRequest(userText);
+  if (isClarification) {
+    const previousQuestion = [...history].reverse().find((m) => m.role === 'user' && m.text?.trim())?.text ?? '';
+    resolvedSearchQuery = `${previousQuestion} ${anchorTopic}`.trim() || resolvedSearchQuery;
+  }
+
   return {
     resolvedSearchQuery,
     anchorTopic: anchorTopic || cleanTitle,
-    isFollowUp: isTopicalFollowUp,
+    isFollowUp: isTopicalFollowUp || isClarification,
     isDeepDive: followUpCheck.isDeepDive,
+    isClarification,
     cleanUserQuery: cleanTitle
   };
 }

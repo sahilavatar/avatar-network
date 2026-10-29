@@ -12,13 +12,16 @@ import {
   selectRelevantHits,
   determineAdaptiveStyle,
   contextUsage,
-  asksAboutOwnNotes
+  asksAboutOwnNotes,
+  asksAboutNotebookAccess,
+  describeNotebook
 } from './services/gemmaGeneration';
 import { aiWorkerClient, ModelWorkerState } from './services/aiWorkerClient';
 import { getPassageVectors } from './services/embeddingCache';
 import { resolveConversationalContext } from './services/textSearch';
 import { chunkDocumentText, saveUpload, updateUploadSource, deleteUpload, clearUploads, loadUploads } from './services/vectorStore';
 import { extractTextFromPdf } from './services/pdfExtractor';
+import { stripPdfBoilerplate } from './services/textCleanup';
 import { generateQuizFromContext, findCuratedQuizQuestion } from './services/quizGenerator';
 import { parseExamQuestions, chunkDocumentPreservingQuestions } from './services/examParser';
 import { recordAnswer, accuracyForStyle, loadProgress, saveProgress } from './services/progress';
@@ -282,7 +285,9 @@ export default function App() {
 
     for (const [fIdx, file] of Array.from(fileList).entries()) {
       try {
-        const text = file.name.toLowerCase().endsWith('.pdf') || file.type.includes('pdf') ? await extractTextFromPdf(file) : await file.text();
+        const isPdf = file.name.toLowerCase().endsWith('.pdf') || file.type.includes('pdf');
+        // PDFs lose running headers, contents pages and near-empty pages before they're split into passages
+        const text = isPdf ? stripPdfBoilerplate(await extractTextFromPdf(file)) : await file.text();
         if (!text || text.trim().length < 20) {
           showNotice(`Couldn't find readable text in ${file.name}`);
           continue;
@@ -393,7 +398,7 @@ export default function App() {
       }
 
       // Keep follow-ups like "explain that in more depth" anchored to the previous topic
-      const { resolvedSearchQuery, anchorTopic, isDeepDive } = resolveConversationalContext(userText, previousHistory, undefined, activePassages);
+      const { resolvedSearchQuery, anchorTopic, isDeepDive, isClarification } = resolveConversationalContext(userText, previousHistory, undefined, activePassages);
       const retrieve = () => searchVectorIndex(resolvedSearchQuery, activePassages, subject, 3);
 
       if (isQuizRequest) {
@@ -434,6 +439,12 @@ export default function App() {
         return;
       }
 
+      // "Do you have access to my practice exam?" is answered from the notebook itself, exactly
+      if (asksAboutNotebookAccess(userText)) {
+        append({ id: responseId, role: 'persona', text: describeNotebook(persona.name.split(' ')[0], sources.filter((s) => s.subject === subject)), timestamp: Date.now() });
+        return;
+      }
+
       if (!aiWorkerClient.isReady()) return offerSetup();
       const retrieval = await retrieve();
       if (request.cancelled) return stoppedNote();
@@ -453,6 +464,7 @@ export default function App() {
         skills: skillInstructions(skills, subject),
         resolvedTopic: anchorTopic,
         isDeepDive,
+        isClarification,
         onToken: (text) => patchIn(convId, responseId, { text })
       });
 
