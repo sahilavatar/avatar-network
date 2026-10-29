@@ -263,13 +263,42 @@ export function buildTutorMessages(params: GenerationParams, relevant: VectorSea
 /**
  * Generates a tutoring reply with the on-device model, streaming text through onToken
  */
+const STOPWORDS = new Set(['that', 'this', 'with', 'from', 'have', 'what', 'when', 'which', 'your', 'their', 'there', 'about', 'they', 'them', 'were', 'does', 'into', 'will', 'would', 'should', 'could', 'been', 'than', 'then', 'also', 'more', 'most', 'some', 'such', 'only', 'each', 'many', 'much', 'very']);
+const contentWords = (text: string) =>
+  new Set((text.toLowerCase().match(/[a-z][a-z'-]{3,}/g) || []).filter((w) => !STOPWORDS.has(w)));
+
+/**
+ * A reply that ignores the question and notes, e.g. just "I'm ready." or an unrelated exercise.
+ * Greedy decoding occasionally produces these with a 1B model; they're retried once with sampling.
+ */
+export function looksBroken(answer: string, query: string, passages: string[]): boolean {
+  const words = answer.trim().split(/\s+/).filter(Boolean);
+  if (words.length < 8) return true;
+  const source = contentWords(`${query} ${passages.join(' ')}`);
+  let shared = 0;
+  for (const w of contentWords(answer)) if (source.has(w) && ++shared >= 2) return false;
+  return true;
+}
+
+/** Drops a leading filler sentence ("Okay.", "Okay, let's dive in!") when an answer follows it */
+export function stripFillerOpener(text: string): string {
+  const stripped = text.replace(/^\s*(?:okay|ok|alright|sure|great|absolutely|hey(?: there)?|hi|hello)\b[^.!?\n]{0,60}[.!?]+\s*/i, '');
+  return stripped.trim() ? stripped : text;
+}
+
 export async function generateTutorResponse(params: GenerationParams): Promise<GenerationResponse> {
   const relevant = selectRelevantHits(params.retrieval);
   const messages = buildTutorMessages(params, relevant);
 
   // No sampling when answering from notes: a 1B model otherwise drifts from what they say ("glows blue" became "green")
   const temperature = relevant.length ? 0 : 0.3;
-  const result = await aiWorkerClient.generate(messages, { maxNewTokens: 280, temperature, onToken: params.onToken });
+  const onToken = params.onToken && ((text: string) => params.onToken!(stripFillerOpener(text)));
+  let result = await aiWorkerClient.generate(messages, { maxNewTokens: 280, temperature, onToken });
+  if (relevant.length && !result.interrupted && looksBroken(result.text, params.query, relevant.map((h) => h.passage.text))) {
+    const retry = await aiWorkerClient.generate(messages, { maxNewTokens: 280, temperature: 0.3, onToken });
+    result = { ...retry, inputTokens: result.inputTokens + retry.inputTokens, outputTokens: result.outputTokens + retry.outputTokens, ms: result.ms + retry.ms };
+  }
+  result = { ...result, text: stripFillerOpener(result.text) };
 
   const cited = params.toolExecution ? relevant.slice(0, 1) : relevant;
   const citations = cited.map((hit, idx) => ({

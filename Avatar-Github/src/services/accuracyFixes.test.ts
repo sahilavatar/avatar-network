@@ -1,6 +1,6 @@
 /// <reference types="bun" />
 import { describe, expect, test } from 'bun:test';
-import { asksAboutNotebookAccess, buildTutorMessages, describeNotebook, detectExamQuestionTarget } from './gemmaGeneration';
+import { asksAboutNotebookAccess, buildTutorMessages, describeNotebook, detectExamQuestionTarget, looksBroken, stripFillerOpener } from './gemmaGeneration';
 import { isClarificationRequest, resolveConversationalContext } from './textSearch';
 import { stripPdfBoilerplate } from './textCleanup';
 import { EXPERT_PERSONAS, INITIAL_SOURCES } from '../data/curriculumData';
@@ -101,5 +101,20 @@ describe('stripPdfBoilerplate', () => {
     const plain = '[Page 1]\nShort note.';
     expect(stripPdfBoilerplate(plain)).toBe(plain);
     expect(stripPdfBoilerplate('Plain text notes about cells and their organelles.')).toBe('Plain text notes about cells and their organelles.');
+  });
+});
+
+describe('reply guards', () => {
+  const notes = ['Trivanol is an amber liquid that boils at 64 °C. It is made by heating fennel oil with copper.'];
+  test('flags replies that ignore the question and notes', () => {
+    expect(looksBroken("I'm ready.", 'What colour is trivanol?', notes)).toBe(true);
+    expect(looksBroken('Here is a new question for you: imagine designing a climbing wall. What three features would you add for safety and durability?', 'What colour is trivanol?', notes)).toBe(true);
+    expect(looksBroken('Trivanol is an amber liquid [1]. It boils at 64 °C, which is quite low. What else do you notice?', 'What colour is trivanol?', notes)).toBe(false);
+  });
+  test('strips a leading filler sentence only', () => {
+    expect(stripFillerOpener('Okay.\n\nThe beetle glows blue [1].')).toBe('The beetle glows blue [1].');
+    expect(stripFillerOpener("Okay, let's dive in! A higher bond order means a stronger bond.")).toBe('A higher bond order means a stronger bond.');
+    expect(stripFillerOpener('Okay.')).toBe('Okay.');
+    expect(stripFillerOpener('Oxygen has six valence electrons.')).toBe('Oxygen has six valence electrons.');
   });
 });
