@@ -112,7 +112,8 @@ function systemPrompt(persona: Persona, style: TeachingStyle, skills: string[] =
   lines.push(...skills);
   lines.push(
     'Keep replies under 120 words. Write plain sentences: no headings, no bold, no lists. Use $...$ for formulas.',
-    'If course notes are given, answer from them and cite them like [1]. If not, answer from general knowledge.',
+    'Answer the question in your first sentence. No greetings or filler such as "Okay", "Great question" or "Let\'s dive in".',
+    'When course notes are given, they are the source of truth: state facts exactly as the notes do (numbers, names, colours, dates, units), cite them like [1], and do not add or change details. If the notes don\'t say, say so. If no notes are given, answer from general knowledge.',
     'Never describe or quote the student\'s notes unless they are shown to you.',
     'End with one short question that checks understanding.'
   );
@@ -247,7 +248,9 @@ export function buildTutorMessages(params: GenerationParams, relevant: VectorSea
   parts.push(
     toolExecution
       ? 'Now, in 2-4 sentences, explain the idea behind this method to the student. Do not do any calculations yourself.'
-      : `Now reply to the student as their tutor${notes.length ? ', citing the notes like [1] where you use them' : ''}.`
+      : notes.length
+        ? "Now answer the student's question using the notes' exact facts, citing the notes like [1]."
+        : 'Now reply to the student as their tutor.'
   );
 
   return [
@@ -264,7 +267,9 @@ export async function generateTutorResponse(params: GenerationParams): Promise<G
   const relevant = selectRelevantHits(params.retrieval);
   const messages = buildTutorMessages(params, relevant);
 
-  const result = await aiWorkerClient.generate(messages, { maxNewTokens: 280, temperature: 0.4, onToken: params.onToken });
+  // No sampling when answering from notes: a 1B model otherwise drifts from what they say ("glows blue" became "green")
+  const temperature = relevant.length ? 0 : 0.3;
+  const result = await aiWorkerClient.generate(messages, { maxNewTokens: 280, temperature, onToken: params.onToken });
 
   const cited = params.toolExecution ? relevant.slice(0, 1) : relevant;
   const citations = cited.map((hit, idx) => ({
