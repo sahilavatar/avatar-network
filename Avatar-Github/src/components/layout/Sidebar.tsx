@@ -37,7 +37,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   return (
     <nav className="h-full flex flex-col" aria-label="Chats">
       <div className="px-4 pt-4 pb-3 flex items-center gap-2.5">
-        <img src="brand/icon-192.png" alt="" width={28} height={28} className="w-7 h-7 rounded-lg ring-1 ring-black/10 dark:ring-white/10" />
+        <img src="brand/icon-192.png" alt="" width={28} height={28} className="w-7 h-7" />
         <span className="text-[15px] font-bold tracking-tight text-slate-900 dark:text-white">Avatar Network</span>
       </div>
 
