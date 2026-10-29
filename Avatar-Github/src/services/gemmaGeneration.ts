@@ -202,7 +202,9 @@ export function asksAboutOwnNotes(query: string): boolean {
  */
 export function buildTutorMessages(params: GenerationParams, relevant: VectorSearchResult[]): ChatTurn[] {
   const { query, persona, teachingStyle, toolExecution, goals = [], skills = [], resolvedTopic, isDeepDive } = params;
-  const parts: string[] = [`Question from the student: ${query}`];
+  // Context first, then the question, then the instruction: with the question first, a 1B model sometimes
+  // ignored it entirely ("I'm ready.") — measured on the notes-accuracy set, putting it last fixed that
+  const parts: string[] = [];
 
   if (toolExecution) {
     parts.push(
@@ -245,6 +247,7 @@ export function buildTutorMessages(params: GenerationParams, relevant: VectorSea
     );
   }
 
+  parts.push(`Question from the student: ${query}`);
   parts.push(
     toolExecution
       ? 'Now, in 2-4 sentences, explain the idea behind this method to the student. Do not do any calculations yourself.'

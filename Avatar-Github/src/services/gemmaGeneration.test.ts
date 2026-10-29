@@ -67,7 +67,9 @@ describe('buildTutorMessages', () => {
     const messages = buildTutorMessages({ query: 'Why?', persona, retrieval: r, teachingStyle: 'guided' }, selectRelevantHits(r));
     const last = messages[messages.length - 1].content;
     expect(messages[0].role).toBe('system');
-    expect(last.startsWith('Question from the student: Why?')).toBe(true);
+    // Notes come first and the question last, right before the instruction to answer
+    expect(last.indexOf('the student did not write these')).toBeLessThan(last.indexOf('Question from the student: Why?'));
+    expect(last.trimEnd().endsWith("citing the notes like [1].")).toBe(true);
     expect(last).toContain('the student did not write these');
     expect(last).toContain('[1] Civics Archive');
     expect(last).toContain('citing the notes');
