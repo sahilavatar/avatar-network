@@ -474,10 +474,9 @@ export const CreateAvatarModal: React.FC<CreateAvatarModalProps> = ({
             {/* Custom Instructions Textarea */}
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Custom Instructions / System Prompt *
+                Custom Instructions / System Prompt <span className="font-normal text-slate-400">(optional)</span>
               </label>
               <textarea
-                required
                 rows={4}
                 value={customInstructions}
                 onChange={(e) => setCustomInstructions(e.target.value)}
