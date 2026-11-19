@@ -115,6 +115,8 @@ describe('reply guards', () => {
     expect(stripFillerOpener('Okay.\n\nThe beetle glows blue [1].')).toBe('The beetle glows blue [1].');
     expect(stripFillerOpener("Okay, let's dive in! A higher bond order means a stronger bond.")).toBe('A higher bond order means a stronger bond.');
     expect(stripFillerOpener('Okay.')).toBe('Okay.');
+    expect(stripFillerOpener('You are correct. Trivanol is amber [1].')).toBe('Trivanol is amber [1].');
+    expect(stripFillerOpener("That's right! The beetle glows blue.")).toBe('The beetle glows blue.');
     expect(stripFillerOpener('Oxygen has six valence electrons.')).toBe('Oxygen has six valence electrons.');
   });
 });

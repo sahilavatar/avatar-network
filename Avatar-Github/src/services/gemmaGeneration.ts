@@ -286,7 +286,7 @@ export function looksBroken(answer: string, query: string, passages: string[]): 
 
 /** Drops a leading filler sentence ("Okay.", "Okay, let's dive in!") when an answer follows it */
 export function stripFillerOpener(text: string): string {
-  const stripped = text.replace(/^\s*(?:okay|ok|alright|sure|great|absolutely|hey(?: there)?|hi|hello)\b[^.!?\n]{0,60}[.!?]+\s*/i, '');
+  const stripped = text.replace(/^\s*(?:(?:okay|ok|alright|sure|great|absolutely|hey(?: there)?|hi|hello)\b[^.!?\n]{0,60}|(?:you(?:'re|\u2019re| are)|that(?:'s|\u2019s| is))\s+(?:correct|right)|correct)[.!?]+\s*/i, '');
   return stripped.trim() ? stripped : text;
 }
 
